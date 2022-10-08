@@ -1,0 +1,39 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ES6",
+        "moduleResolution": "Node",
+        "lib": [
+          "ES2022",
+          "dom"
+        ],
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "composite": true, // Enable project compilation
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "inlineSources": false,
+        "stripInternal": true,
+        "strict": true,
+        "strictPropertyInitialization": false,
+        "importHelpers": true,
+        "downlevelIteration": false,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "skipLibCheck": true, // Skip type checking of declaration files.
+        "forceConsistentCasingInFileNames": true, // Disallow inconsistently-cased references to the same file
+        "rootDir": "src",
+        "outDir": "lib",
+        "declarationDir": "lib",
+        "noUnusedParameters": false,
+    },
+    "include": [
+      "src/**/*.ts",
+    ],
+    "exclude": [
+      "dist",
+      "lib",
+      "node_modules"
+    ]
+}
