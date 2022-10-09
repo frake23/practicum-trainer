@@ -1,3 +1,4 @@
+import { Text } from "@codemirror/state";
 import { EditorView, PluginValue } from "@codemirror/view";
 
 export class CodeMirrorLanguageServerPlugin implements PluginValue {
@@ -17,7 +18,11 @@ export class CodeMirrorLanguageServerPlugin implements PluginValue {
         this.destroy = onDestroy;
     }
 
-    public get viewText() {
-        return this.view.state.doc.sliceString(0);
+    public get viewText(): Text {
+        return this.view.state.doc;
+    }
+
+    public get viewString(): string {
+        return this.viewText.sliceString(0);
     }
 }

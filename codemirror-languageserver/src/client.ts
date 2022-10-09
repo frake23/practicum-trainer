@@ -1,23 +1,21 @@
 import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
 import Client, { RequestManager, WebSocketTransport } from "@open-rpc/client-js";
-import * as LSP from 'vscode-languageserver-protocol';
 import { IJSONRPCNotification } from "@open-rpc/client-js/build/Request";
 import { PublishDiagnosticsFeature, DidChangeTextDocumentFeature, DidOpenTextDocumentFeature, ICodeMirrorFeature, IFeature } from "./features";
 import { CodeMirrorLanguageServerPlugin } from "./plugin";
 import { Transport } from "@open-rpc/client-js/build/transports/Transport";
 import { Extension } from "@codemirror/state";
+import { ClientCapabilities, InitializedParams, InitializeParams, InitializeResult } from "vscode-languageserver-protocol";
 
 export interface BaseLanguageClientOptions {
     transport?: Transport;
     serverUri?: string;
-    rootUri: string;
     documentUri: string;
     languageId: string;
 }
 
 export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeature> {
     public rpcClient: Client;
-    public rootUri: string;
     public documentUri: string;
     public languageId: string;
 
@@ -53,9 +51,8 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
                 this.rpcClient?.notify({
                     method, params
                 }).then(() => {
-                    console.log('notification resolved')
                     resolve();
-                }).catch(() => console.log('notification not resolved'))
+                })
             }, delay);
         });
     }
@@ -87,79 +84,37 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
 
         this.rpcClient.onNotification(this._onNotification.bind(this));
 
-        const initializeParams: LSP.InitializeParams = {
-            capabilities: {
-                textDocument: {
-                    moniker: {},
-                    synchronization: {
-                        dynamicRegistration: true,
-                        willSave: false,
-                        didSave: false,
-                        willSaveWaitUntil: false,
-                    },
-                    signatureHelp: {
-                        dynamicRegistration: true,
-                        signatureInformation: {
-                            documentationFormat: ['plaintext', 'markdown'],
-                        },
-                    },
-                    declaration: {
-                        dynamicRegistration: true,
-                        linkSupport: true,
-                    },
-                    definition: {
-                        dynamicRegistration: true,
-                        linkSupport: true,
-                    },
-                    typeDefinition: {
-                        dynamicRegistration: true,
-                        linkSupport: true,
-                    },
-                    implementation: {
-                        dynamicRegistration: true,
-                        linkSupport: true,
-                    },
-                    publishDiagnostics: {
-                        relatedInformation: true,
-                        versionSupport: false,
-                        codeDescriptionSupport: true,
-                        dataSupport: true,
-                    }
-                },
-                workspace: {
-                    didChangeConfiguration: {
-                        dynamicRegistration: true,
-                    },
-                },
-            },
+        const initializeParams: InitializeParams = {
+            capabilities: this._computeClientCapabilities(),
             initializationOptions: null,
             processId: null,
-            rootUri: this.rootUri,
+            rootUri: null,
+            workspaceFolders: null,
+            locale: "ru",
         }
 
-        const result = await this.makeRequest<LSP.InitializeParams, LSP.InitializeResult>('initialize', initializeParams);
+        const result = await this.makeRequest<InitializeParams, InitializeResult>('initialize', initializeParams);
 
-        await this.sendNotification<LSP.InitializedParams>('initialized', {});
+        await this.sendNotification<InitializedParams>('initialized', {});
 
         for (const feature of this._features) {
             feature.initialize(result.capabilities);
         }
-
     }
 
     public shutdown(): void {
         this.rpcClient?.close();
     }
 
-    // private _computeClientCapabilities(): LSP.ClientCapabilities {
-    //     const result: LSP.ClientCapabilities = {};
+    private _computeClientCapabilities(): ClientCapabilities {
+        const result: ClientCapabilities = {};
 
-    //     for (const feature of this._features) {
-    //         feature.fillClientCapabilities(result);
-    //     }
+        for (const feature of this._features) {
+            feature.fillClientCapabilities(result);
+        }
 
-    //     return result;
-    // }
+        return result;
+    }
 }
 
 

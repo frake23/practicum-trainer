@@ -5,7 +5,6 @@ import { javascript } from '@codemirror/lang-javascript';
 
 
 const codeMirrorClient = new CodeMirrorLanguageClient({
-    rootUri: '',
     documentUri: 'user',
     languageId: 'javascript',
     serverUri: 'ws://localhost:8080'
