@@ -18,6 +18,6 @@ export class CodeMirrorLanguageServerPlugin implements PluginValue {
     }
 
     public get viewText() {
-        return this.view.state.doc.sliceString(0)
+        return this.view.state.doc.sliceString(0);
     }
 }

@@ -1,11 +1,11 @@
 import { Extension } from "@codemirror/state";
 import * as LSP from 'vscode-languageserver-protocol';
-import { CodeMirrorLanguageClient } from './language-client';
-
+import { CodeMirrorLanguageClient } from './client';
 
 export interface IFeature {
     method: string,
-    register: () => void,
+    initialize(capabilities: LSP.ServerCapabilities): void,
+    fillClientCapabilities(capabilities: LSP.ClientCapabilities): void;
 }
 
 export interface ICodeMirrorFeature extends IFeature {
@@ -14,13 +14,15 @@ export interface ICodeMirrorFeature extends IFeature {
 
 export abstract class DefaultCodeMirrorFeature implements ICodeMirrorFeature {
     public method: string;
-    protected client: CodeMirrorLanguageClient;
+    protected _client: CodeMirrorLanguageClient;
 
     constructor(client: CodeMirrorLanguageClient) {
-        this.client = client;
+        this._client = client;
     }
 
-    abstract register(): void;
+    abstract initialize(capabilities: LSP.ServerCapabilities): void;
+
+    abstract fillClientCapabilities(capabilities: LSP.ClientCapabilities): void;
 
     getExtension(): Extension | null {
         return null;
@@ -30,39 +32,67 @@ export abstract class DefaultCodeMirrorFeature implements ICodeMirrorFeature {
 export class DidOpenTextDocumentFeature extends DefaultCodeMirrorFeature {
     public method: string = 'textDocument/didOpen';
 
-    public register(): void {
-        this.client.sendNotification<LSP.DidOpenTextDocumentParams>(
-            this.method,
-            {
-                textDocument: {
-                    uri: this.client.documentUri,
-                    languageId: this.client.languageId,
-                    text: this.client.plugin?.viewText ?? '',
-                    version: this.client.docVersion,
-                }
+    fillClientCapabilities(capabilities: LSP.ClientCapabilities): void {
+
+    }
+
+
+    public initialize(capabilities: LSP.ServerCapabilities): void {
+        const params: LSP.DidOpenTextDocumentParams = {
+            textDocument: {
+                uri: this._client.documentUri,
+                languageId: this._client.languageId,
+                text: this._client.plugin?.viewText ?? '',
+                version: this._client.docVersion,
             }
-        )
+        };
+
+        this._client.sendNotification(
+            this.method,
+            params
+        );
     }
 }
 
 export class DidChangeTextDocumentFeature extends DefaultCodeMirrorFeature {
     public method: string = 'textDocument/didChange';
 
-    public register(): void {
-        this.client.plugin?.setOnUpdate(({ docChanged }) => {
+    fillClientCapabilities(capabilities: LSP.ClientCapabilities): void {
+
+    }
+
+    public initialize(): void {
+        this._client.plugin?.setOnUpdate(({ docChanged }) => {
             if (!docChanged) return;
-            this.client.sendNotification<LSP.DidChangeTextDocumentParams>(
-                this.method,
+
+            const params: LSP.DidChangeTextDocumentParams = {
+                textDocument:
                 {
-                    textDocument:
-                    {
-                        uri: this.client.documentUri,
-                        version: this.client.docVersion,
-                    },
-                    contentChanges: [{ text: this.client.plugin!.viewText }]
+                    uri: this._client.documentUri,
+                    version: this._client.docVersion,
                 },
+                contentChanges: [{ text: this._client.plugin!.viewText }]
+            }
+
+            this._client.sendNotification(
+                this.method,
+                params,
                 500
             )
+        })
+    }
+}
+
+export class PublishDiagnosticsFeature extends DefaultCodeMirrorFeature {
+    public method: string = 'textDocument/publishDiagnostics';
+
+    fillClientCapabilities(capabilities: LSP.ClientCapabilities): void {
+
+    }
+
+    public initialize(): void {
+        this._client.onNotification(this.method, (params: LSP.PublishDiagnosticsParams) => {
+
         })
     }
 }
@@ -70,8 +100,13 @@ export class DidChangeTextDocumentFeature extends DefaultCodeMirrorFeature {
 export class CompletionFeature extends DefaultCodeMirrorFeature {
     method: string = 'textDocument/completion';
 
-    async register(): Promise<void> {
-        
+    fillClientCapabilities(capabilities: LSP.ClientCapabilities): void {
+
+    }
+
+
+    async initialize(): Promise<void> {
+
     }
 
     getExtension() {

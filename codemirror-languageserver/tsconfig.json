@@ -24,8 +24,8 @@
         "skipLibCheck": true, // Skip type checking of declaration files.
         "forceConsistentCasingInFileNames": true, // Disallow inconsistently-cased references to the same file
         "rootDir": "src",
-        "outDir": "lib",
-        "declarationDir": "lib",
+        "outDir": "dist",
+        "declarationDir": "dist",
         "noUnusedParameters": false,
     },
     "include": [

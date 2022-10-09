@@ -1,2 +1,3 @@
 export * from './features';
-export * from './language-client';
+export * from './client';
+export * from './plugin';

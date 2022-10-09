@@ -12,7 +12,11 @@ const forwardWsToProcess = (ws: WebSocket, createProcessArgs: CreateProcessArgs)
     const serverConnection = rpcServer.createServerProcess(...createProcessArgs);
 
     if (serverConnection) {
-        rpcServer.forward(socketConnection, serverConnection);
+        rpcServer.forward(socketConnection, serverConnection, (message) => {
+            console.log(`Request with message `, message);
+
+            return message;
+        });
     };
 };
 
@@ -45,7 +49,7 @@ const main = () => {
                 found = true;
             }
         });
-        
+
         if (!found) {
             socket.destroy();
         }

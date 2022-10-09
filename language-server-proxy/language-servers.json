@@ -1,6 +1,6 @@
 {
     "javascript": {
-        "command": "/Users/frakex/Library/pnpm/nodejs/14.20.0/bin/typescript-language-server",
+        "command": "typescript-language-server",
         "args": ["--stdio"]
     }
 }
