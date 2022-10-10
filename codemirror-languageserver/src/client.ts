@@ -1,10 +1,10 @@
-import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 import Client, { RequestManager, WebSocketTransport } from "@open-rpc/client-js";
 import { IJSONRPCNotification } from "@open-rpc/client-js/build/Request";
-import { PublishDiagnosticsFeature, DidChangeTextDocumentFeature, DidOpenTextDocumentFeature, ICodeMirrorFeature, IFeature } from "./features";
+import { PublishDiagnosticsFeature, DidChangeTextDocumentFeature, DidOpenTextDocumentFeature, ICodeMirrorFeature, IFeature, HoverFeature } from "./features";
 import { CodeMirrorLanguageServerPlugin } from "./plugin";
 import { Transport } from "@open-rpc/client-js/build/transports/Transport";
-import { Extension } from "@codemirror/state";
+import { StateEffect } from "@codemirror/state";
 import { ClientCapabilities, InitializedParams, InitializeParams, InitializeResult } from "vscode-languageserver-protocol";
 
 export interface BaseLanguageClientOptions {
@@ -15,7 +15,7 @@ export interface BaseLanguageClientOptions {
 }
 
 export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeature> {
-    public rpcClient: Client;
+    private _rpcClient: Client;
     public documentUri: string;
     public languageId: string;
 
@@ -25,7 +25,7 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
     private _notificationHandlers: Record<string, (params: any) => void> = {};
     private _docVersion: number = 0;
 
-    constructor(options: BaseLanguageClientOptions) {
+    public constructor(options: BaseLanguageClientOptions) {
         this.languageId = options.languageId;
 
         if (options.transport) {
@@ -41,6 +41,10 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
         this.registerFeatures()
     }
 
+    public get rpcClient(): Client {
+        return this._rpcClient
+    }
+
     public get docVersion() {
         return this._docVersion++;
     }
@@ -48,7 +52,7 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
     public sendNotification<T extends object = any>(method: string, params: T, delay: number = 0): Promise<void> {
         return new Promise((resolve) => {
             setTimeout(() => {
-                this.rpcClient?.notify({
+                this._rpcClient?.notify({
                     method, params
                 }).then(() => {
                     resolve();
@@ -58,7 +62,7 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
     }
 
     public makeRequest<T extends object = any, R = any>(method: string, params: T, timeout?: number): Promise<R> {
-        return this.rpcClient?.request({
+        return this._rpcClient?.request({
             method, params
         }, timeout) as Promise<R>;
     }
@@ -80,9 +84,9 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
     protected abstract registerFeatures(): void;
 
     public async initialize(): Promise<void> {
-        this.rpcClient = new Client(new RequestManager([this._transport]));
+        this._rpcClient = new Client(new RequestManager([this._transport]));
 
-        this.rpcClient.onNotification(this._onNotification.bind(this));
+        this._rpcClient.onNotification(this._onNotification.bind(this));
 
         const initializeParams: InitializeParams = {
             capabilities: this._computeClientCapabilities(),
@@ -90,7 +94,7 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
             processId: null,
             rootUri: null,
             workspaceFolders: null,
-            locale: "ru",
+            locale: "ru-RU",
         }
 
         const result = await this.makeRequest<InitializeParams, InitializeResult>('initialize', initializeParams);
@@ -103,7 +107,7 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
     }
 
     public shutdown(): void {
-        this.rpcClient?.close();
+        this._rpcClient?.close();
     }
 
     private _computeClientCapabilities(): ClientCapabilities {
@@ -119,33 +123,42 @@ export abstract class BaseLanguageClient<FEATURE_TYPE extends IFeature = IFeatur
 
 
 export class CodeMirrorLanguageClient extends BaseLanguageClient<ICodeMirrorFeature> {
-    public plugin: CodeMirrorLanguageServerPlugin | null = null;
+    private _plugin: CodeMirrorLanguageServerPlugin | null = null;
 
-    constructor(options: BaseLanguageClientOptions) {
+    public constructor(options: BaseLanguageClientOptions) {
         super(options);
+    }
+
+    public get plugin(): CodeMirrorLanguageServerPlugin | null {
+        return this._plugin;
     }
 
     public registerFeatures(): void {
         this.registerFeature(new DidOpenTextDocumentFeature(this));
         this.registerFeature(new DidChangeTextDocumentFeature(this));
         this.registerFeature(new PublishDiagnosticsFeature(this));
+        this.registerFeature(new HoverFeature(this));
     }
 
-    private _definePlugin(view: EditorView): PluginValue {
-        this.plugin = new CodeMirrorLanguageServerPlugin(view);
-        this.plugin.setOnDestroy(this.shutdown.bind(this));
+    public definePluginWithExtensions(): ViewPlugin<CodeMirrorLanguageServerPlugin> {
+        return ViewPlugin.define((view: EditorView) => {
+            this._plugin = new CodeMirrorLanguageServerPlugin(view);
+            this._plugin.setOnDestroy(this.shutdown.bind(this));
 
-        this.initialize();
+            this.initialize().then(() => {
+                view.dispatch({
+                    effects: this._features
+                        .map(feature => feature.extension)
+                        .filter(extension => Boolean(extension))
+                        .map(extension => {
+                            return StateEffect.appendConfig.of(extension!)
+                        })
+                })
+            });
 
-        return this.plugin;
-    }
-
-    public getExtensions(): Extension[] {
-        return [
-            ViewPlugin.define(this._definePlugin.bind(this)),
-            ...this._features
-                .map(feature => feature.getExtension())
-                .filter(extension => Boolean(extension)) as Extension[]
-        ];
+            return this._plugin;
+        });
     }
 }
+
+const a = Number(0)

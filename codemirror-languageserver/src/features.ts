@@ -2,7 +2,8 @@ import { Extension } from "@codemirror/state";
 import { setDiagnostics } from '@codemirror/lint';
 import { Text } from '@codemirror/state'
 import { CodeMirrorLanguageClient } from './client';
-import { ClientCapabilities, DidChangeTextDocumentParams, DidOpenTextDocumentParams, PublishDiagnosticsParams, ServerCapabilities } from "vscode-languageserver-protocol";
+import { ClientCapabilities, DidChangeTextDocumentParams, DidOpenTextDocumentParams, Hover, HoverParams, MarkedString, MarkupContent, PublishDiagnosticsParams, ServerCapabilities } from "vscode-languageserver-protocol";
+import { hoverTooltip } from "@codemirror/view";
 
 export function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
     if (target[key] === undefined) {
@@ -17,23 +18,24 @@ export interface IFeature {
 }
 
 export interface ICodeMirrorFeature extends IFeature {
-    getExtension(): Extension | null;
+    extension: Extension | null;
 }
 
 export abstract class DefaultCodeMirrorFeature implements ICodeMirrorFeature {
     protected _client: CodeMirrorLanguageClient;
+    protected _extension: Extension | null = null;
 
-    constructor(client: CodeMirrorLanguageClient) {
+    public constructor(client: CodeMirrorLanguageClient) {
         this._client = client;
+    }
+
+    public get extension(): Extension | null {
+        return this._extension;
     }
 
     abstract initialize(capabilities: ServerCapabilities): void;
 
     abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
-
-    getExtension(): Extension | null {
-        return null;
-    };
 }
 
 export class DidOpenTextDocumentFeature extends DefaultCodeMirrorFeature {
@@ -61,13 +63,13 @@ export class DidOpenTextDocumentFeature extends DefaultCodeMirrorFeature {
 }
 
 export class DidChangeTextDocumentFeature extends DefaultCodeMirrorFeature {
-    public method: string = 'textDocument/didChange';
+    private _method: string = 'textDocument/didChange';
 
     public fillClientCapabilities(capabilities: ClientCapabilities): void {
         ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.dynamicRegistration = true;
     }
 
-    public initialize(): void {
+    public initialize(capabilities: ServerCapabilities): void {
         this._client.plugin?.setOnUpdate(({ docChanged }) => {
             if (!docChanged) return;
 
@@ -81,7 +83,7 @@ export class DidChangeTextDocumentFeature extends DefaultCodeMirrorFeature {
             }
 
             this._client.sendNotification(
-                this.method,
+                this._method,
                 params,
                 500
             )
@@ -90,7 +92,7 @@ export class DidChangeTextDocumentFeature extends DefaultCodeMirrorFeature {
 }
 
 export class PublishDiagnosticsFeature extends DefaultCodeMirrorFeature {
-    public method: string = 'textDocument/publishDiagnostics';
+    private _method: string = 'textDocument/publishDiagnostics';
 
     public fillClientCapabilities(capabilities: ClientCapabilities): void {
         const diagnostics = ensure(ensure(capabilities, 'textDocument')!, 'publishDiagnostics')!;
@@ -102,9 +104,9 @@ export class PublishDiagnosticsFeature extends DefaultCodeMirrorFeature {
     }
 
     public initialize(_capabilities: ServerCapabilities): void {
-        this._client.onNotification(this.method, (params: PublishDiagnosticsParams) => {
+        this._client.onNotification(this._method, (params: PublishDiagnosticsParams) => {
             if (!this._client.plugin) return;
-            
+
             const view = this._client.plugin.view;
             const text = this._client.plugin.viewText;
 
@@ -130,31 +132,46 @@ export class PublishDiagnosticsFeature extends DefaultCodeMirrorFeature {
     }
 }
 
-export class CompletionFeature extends DefaultCodeMirrorFeature {
-    method: string = 'textDocument/completion';
-
-    fillClientCapabilities(capabilities: ClientCapabilities): void {
-
-    }
-
-
-    async initialize(): Promise<void> {
-
-    }
-
-    getExtension() {
-        return null;
-    }
-}
-
 export class HoverFeature extends DefaultCodeMirrorFeature {
-    initialize(capabilities: ServerCapabilities<any>): void {
-        throw new Error("Method not implemented.");
+    private _method: string = 'textDocument/hover'
+
+    public fillClientCapabilities(capabilities: ClientCapabilities): void {
+        const hoverCapability = (ensure(ensure(capabilities, 'textDocument')!, 'hover')!);
+        hoverCapability.dynamicRegistration = true;
+        hoverCapability.contentFormat = ['markdown', 'plaintext'];
     }
-    fillClientCapabilities(capabilities: ClientCapabilities): void {
-        throw new Error("Method not implemented.");
+
+    public initialize(capabilities: ServerCapabilities<any>): void {
+        if (!capabilities.hoverProvider) return;
+
+        this._extension = hoverTooltip(async (view, offset) => {
+            const position = offsetToPos(view.state.doc, offset);
+
+            const params: HoverParams = {
+                textDocument: {
+                    uri: this._client.documentUri,
+                },
+                position
+            }
+
+            const { contents, range } = await this._client.makeRequest<HoverParams, Hover>(this._method, params);
+
+            let pos = offset;
+            let end: number | undefined;
+
+            if (range) {
+                pos = posToOffset(view.state.doc, range.start)!;
+                end = posToOffset(view.state.doc, range.end);
+            }
+
+            const dom = document.createElement('div');
+
+            dom.classList.add('documentation');
+            dom.textContent = formatContents(contents);
+
+            return { pos, end, create: (view) => ({ dom }), above: true };
+        });
     }
-    method: string = 'textDocument/'
 }
 
 function posToOffset(doc: Text, pos: { line: number; character: number }) {
@@ -166,3 +183,24 @@ function posToOffset(doc: Text, pos: { line: number; character: number }) {
 
     return offset;
 }
+
+function offsetToPos(doc: Text, offset: number) {
+    const line = doc.lineAt(offset);
+    return {
+        line: line.number - 1,
+        character: offset - line.from,
+    };
+}
+
+function formatContents(
+    contents: MarkupContent | MarkedString | MarkedString[]
+): string {
+    if (Array.isArray(contents)) {
+        return contents.map((c) => formatContents(c) + '\n\n').join('');
+    } else if (typeof contents === 'string') {
+        return contents;
+    } else {
+        return contents.value;
+    }
+}
+

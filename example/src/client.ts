@@ -1,6 +1,6 @@
 import { CodeMirrorLanguageClient } from "codemirror-languageserver";
 import { EditorView, basicSetup } from 'codemirror';
-import { EditorState } from "@codemirror/state";
+import { EditorState, Extension } from "@codemirror/state";
 import { javascript } from '@codemirror/lang-javascript';
 
 
@@ -14,9 +14,10 @@ let state = EditorState.create({
     extensions: [
         basicSetup,
         javascript(),
-        codeMirrorClient.getExtensions(),
+        codeMirrorClient.definePluginWithExtensions(),
     ]
 })
+
 
 let view = new EditorView({
     state,
