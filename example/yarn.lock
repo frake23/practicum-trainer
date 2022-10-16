@@ -262,7 +262,7 @@ codemirror-languageserver@../codemirror-languageserver:
     "@codemirror/state" "^6.1.2"
     "@codemirror/view" "^6.3.0"
     "@open-rpc/client-js" "../client-js"
-    eslint "^8.24.0"
+    eslint "^8.0.1"
     global "^4.4.0"
 
 codemirror@^6.0.1:
@@ -498,7 +498,7 @@ eslint-visitor-keys@^3.3.0:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-3.3.0.tgz#f6480fa6b1f30efe2d1968aa8ac745b862469826"
   integrity sha512-mQ+suqKJVyeuwGYHAdjMFqjCyfl8+Ldnxuyp3ldiMBFKkvytrXUZWaiPCEav8qDHKty44bD+qV1IP4T+w+xXRA==
 
-eslint@^8.24.0:
+eslint@^8.0.1:
   version "8.25.0"
   resolved "https://registry.yarnpkg.com/eslint/-/eslint-8.25.0.tgz#00eb962f50962165d0c4ee3327708315eaa8058b"
   integrity sha512-DVlJOZ4Pn50zcKW5bYH7GQK/9MsoQG2d5eDH0ebEkE8PbgzTTmtt/VTH9GGJ4BfeZCpBLqFfvsjX35UacUL83A==
