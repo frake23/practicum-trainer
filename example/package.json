@@ -14,8 +14,10 @@
     "vite": "^3.1.0"
   },
   "dependencies": {
+    "@codemirror/highlight": "^0.19.8",
     "@codemirror/lang-javascript": "^6.1.0",
     "@codemirror/state": "^6.1.2",
+    "@codemirror/theme-one-dark": "^6.1.0",
     "@codemirror/view": "^6.3.0",
     "codemirror": "^6.0.1",
     "codemirror-languageserver": "../codemirror-languageserver",

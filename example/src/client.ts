@@ -1,8 +1,8 @@
-import { CodeMirrorLanguageClient } from "codemirror-languageserver";
-import { EditorView, basicSetup } from 'codemirror';
-import { EditorState } from "@codemirror/state";
-import { javascript } from '@codemirror/lang-javascript';
-
+import {CodeMirrorLanguageClient} from "codemirror-languageserver";
+import {EditorView, basicSetup} from 'codemirror';
+import {EditorState} from "@codemirror/state";
+import {javascript} from '@codemirror/lang-javascript';
+import { oneDark } from '@codemirror/theme-one-dark';
 
 const codeMirrorClient = new CodeMirrorLanguageClient({
     documentUri: 'user',
@@ -15,21 +15,9 @@ let state = EditorState.create({
         basicSetup,
         javascript(),
         codeMirrorClient.definePluginWithExtensions(),
-        EditorView.baseTheme({
-            '.cm-tooltip.documentation': {
-                display: 'block',
-                marginLeft: '0',
-                padding: '3px 6px 3px 8px',
-                borderLeft: '5px solid #999',
-                whiteSpace: 'pre',
-            },
-            '.cm-tooltip.lint': {
-                whiteSpace: 'pre',
-            },
-        })
+        oneDark
     ]
 })
-
 
 let view = new EditorView({
     state,

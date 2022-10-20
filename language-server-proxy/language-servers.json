@@ -1,6 +1,11 @@
 {
-    "javascript": {
-        "command": "typescript-language-server",
-        "args": ["--stdio"]
-    }
+  "javascript": {
+    "command": "typescript-language-server",
+    "args": [
+      "--stdio"
+    ]
+  },
+  "python": {
+    "command": "pyls"
+  }
 }

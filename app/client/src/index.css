@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.documentation {
+	@apply p-2 border border-gray-200 bg-white text-xs;
+}
+
+.cm-completionLabel {
+	@apply text-xs font-sans px-2 my-1;
+}
+
+.cm-tooltip-autocomplete ul {
+	@apply bg-white;
+}
+
+.cm-tooltip-autocomplete ul > li {
+	@apply bg-white;
+}
+
+.cm-completionMatchedText {
+	@apply text-blue-500 no-underline;
+}

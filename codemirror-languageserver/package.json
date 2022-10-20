@@ -28,7 +28,7 @@
     "@codemirror/lint": "^6.0.0",
     "@codemirror/state": "^6.1.2",
     "@codemirror/view": "^6.3.0",
-    "@open-rpc/client-js": "../client-js",
+    "@open-rpc/client-js": "../../client-js",
     "eslint": "^8.0.1",
     "global": "^4.4.0"
   },

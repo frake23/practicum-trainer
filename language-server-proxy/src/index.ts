@@ -34,6 +34,8 @@ const main = () => {
             forwardWsToProcess(ws, args)
         })
 
+        wss.on('close', () => console.log('CLOSED'))
+
         return wss;
     });
 

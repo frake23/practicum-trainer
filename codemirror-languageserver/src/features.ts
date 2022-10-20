@@ -82,7 +82,7 @@ export class DidChangeTextDocumentFeature extends DefaultCodeMirrorFeature {
   }
 
   public initialize (_capabilities: ServerCapabilities): void {
-    let timeout: NodeJS.Timeout
+    let timeout: any
 
     this._client.plugin?.setOnUpdate(({ docChanged }) => {
       if (!docChanged) return
