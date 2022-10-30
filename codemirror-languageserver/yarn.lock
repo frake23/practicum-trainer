@@ -121,8 +121,9 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@open-rpc/client-js@../client-js":
+"@open-rpc/client-js@file:./open-rpc-client-js-0.0.0-development.tgz":
   version "0.0.0-development"
+  resolved "file:./open-rpc-client-js-0.0.0-development.tgz#a4c282e4b32edfc33cbc75d8e15262d6db8c48ca"
   dependencies:
     isomorphic-fetch "^3.0.0"
     isomorphic-ws "^5.0.0"
