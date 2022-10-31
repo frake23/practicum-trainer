@@ -2,7 +2,7 @@ import { AcademicCapIcon } from "@heroicons/react/24/solid";
 
 export const Header = () => {
 	return (
-		<div className='bg-gray-300 shadow-sm'>
+		<div className='bg-gray-200 shadow-md'>
 			<div className='container mx-auto py-2 flex items-center gap-8'>
 				<div className='flex gap-2'>
 					<AcademicCapIcon className='h-8' />

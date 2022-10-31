@@ -6,16 +6,11 @@ type PropsRef<T> = {
 };
 
 export const usePrevProp = <T = any>(prop: T): T | null => {
-	const props = useRef<PropsRef<T>>({ curr: prop, prev: null });
+	const ref = useRef(prop);
 
 	useEffect(() => {
-		console.log({prop, props: props.current})
-		props.current.prev = props.current.curr;
-		props.current.curr = prop;
+		ref.current = prop;
 	}, [prop]);
 
-	return props.current.prev;
+	return ref.current;
 };
-
-
- 

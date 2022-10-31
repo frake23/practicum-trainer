@@ -1,32 +1,31 @@
-import { CodeMirrorLanguageClient } from "codemirror-languageserver";
-import { useEffect, useRef, useState } from "react";
-import { python } from "@codemirror/lang-python";
-import { githubLight } from "@uiw/codemirror-theme-github";
+import { indentWithTab } from "@codemirror/commands";
+import { indentUnit } from "@codemirror/language";
 import { EditorState, Text } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-import { indentWithTab } from "@codemirror/commands";
 import { basicSetup } from "@uiw/codemirror-extensions-basic-setup";
-import { javascript } from "@codemirror/lang-javascript";
-import { indentUnit } from "@codemirror/language";
-import { usePrevProp } from "../hooks/usePrevProps";
+import { githubLight } from "@uiw/codemirror-theme-github";
+import { CodeMirrorLanguageClient } from "codemirror-languageserver";
+import { useEffect, useRef, useState } from "react";
+import { AvailableLanguages, languageToExtensionMap } from "../constants";
+import { usePrevProp } from "./usePrevProps";
 
-const languageToExtensionMap = {
-	python,
-	javascript,
+type UseEditorOptions = {
+	languageId: AvailableLanguages;
+	documentUri: string;
 };
 
-interface EditorProps {
-	languageId: keyof typeof languageToExtensionMap;
-	documentUri: string;
-	className?: string;
-}
+export const useEditor = (
+	container: HTMLDivElement | null,
+	options: UseEditorOptions
+) => {
+	const { languageId, documentUri } = options;
 
-export const Editor = ({ languageId, documentUri, className }: EditorProps) => {
+	const [parent, setParent] = useState<HTMLDivElement>();
+
+	useEffect(() => setParent(container!), [container]);
+
 	const prevDocumentUri = usePrevProp(documentUri);
 
-	console.log({prevDocumentUri})
-
-	const editor = useRef(null);
 	const [view, setView] = useState<EditorView | null>(null);
 	const statesRef = useRef<Record<string, Text>>({});
 
@@ -43,16 +42,16 @@ export const Editor = ({ languageId, documentUri, className }: EditorProps) => {
 	}, [documentUri, view]);
 
 	useEffect(() => {
-		if (!editor.current) return;
+		if (!parent) return;
+
+		console.log(view);
 
 		setView(
-			(view) =>
-				view ||
-				new EditorView({
-					parent: editor.current!,
-				})
+			new EditorView({
+				parent,
+			})
 		);
-	}, [editor.currxent, setView]);
+	}, [parent, setView]);
 
 	useEffect(() => {
 		if (!view) return;
@@ -91,10 +90,7 @@ export const Editor = ({ languageId, documentUri, className }: EditorProps) => {
 		};
 	}, []);
 
-	return (
-		<div
-			ref={editor}
-			className={`rounded-xl shadow-md ${className ?? ""}`}
-		/>
-	);
+	return {
+		view,
+	};
 };
