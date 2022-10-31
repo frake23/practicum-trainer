@@ -1,4 +1,5 @@
-from enum import enum, auto
+from enum import Enum
 
-class Languages(str, enum):
-    python = auto()
+class Languages(Enum):
+    python = 'python'
+    javascript = 'javascript'

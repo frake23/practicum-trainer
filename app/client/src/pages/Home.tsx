@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import Select from "react-select";
 import { useEditor } from "../hooks/useEditor";
 import { PlayIcon } from "@heroicons/react/24/solid";
+import { useMutation } from "@tanstack/react-query";
+import { postRunSnippet } from "../api";
 
 const options = [
 	{ value: "python", label: "Python" },
@@ -21,6 +23,9 @@ export const HomePage = () => {
 		languageId: option?.value!,
 		documentUri: `user/${option?.value}`,
 	});
+
+	const a = useMutation(['code'], postRunSnippet);
+	a.data?.json()
 
 	const onCodeRun = async () => {
 		const content = view?.state.doc.sliceString(0);

@@ -13,6 +13,7 @@ router = APIRouter(
 
 @router.post('/run', response_model=ServerlessResponse)
 async def snippet_run(request: RunSnippetRequest):
+    file = ServerlessFile(name="", content=request.content)
     
     file.name = "main.py"
     payload = {"files": [file.dict()], "command": "python main.py"}
