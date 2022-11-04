@@ -1,12 +1,16 @@
 from pydantic import BaseModel
+from enum import Enum
+
+
+class Languages(str, Enum):
+    python = 'python'
+    golang = 'golang'
+
 
 class ServerlessFile(BaseModel):
     name: str
     content: str
     is_base64_encoded: bool | None
-
-
-def get_file_from_lang(lang: Languages)
 
 
 class ServerlessResponse(BaseModel):
@@ -17,4 +21,4 @@ class ServerlessResponse(BaseModel):
 
 class RunSnippetRequest(BaseModel):
     content: str
-    language: str
+    language: Languages

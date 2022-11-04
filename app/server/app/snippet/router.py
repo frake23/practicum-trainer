@@ -2,25 +2,41 @@ from http import HTTPStatus
 from urllib.parse import urljoin
 from fastapi import APIRouter
 import aiohttp
-from app.config import settings
+from ..config import settings
 
-from .schemas import RunSnippetRequest, ServerlessFile, ServerlessResponse
+from .schemas import Languages, RunSnippetRequest, ServerlessFile, ServerlessResponse
 
 router = APIRouter(
     prefix="/snippet",
     tags=["snippet"]
 )
 
+
+def serverless_payload_from_request(request: RunSnippetRequest) -> dict:
+    language = request.language
+
+    files = {
+        Languages.golang.value: 'main.go',
+        Languages.python.value: 'main.py'
+    }
+
+    commands = {
+        Languages.golang.value: f'go run {files[Languages.golang.value]}',
+        Languages.python.value: f'python {files[Languages.python.value]}'
+    }
+
+    file = ServerlessFile(name=files[language], content=request.content)
+
+    return {"files": [file.dict()], "command": commands[language]}
+
+
 @router.post('/run', response_model=ServerlessResponse)
 async def snippet_run(request: RunSnippetRequest):
-    file = ServerlessFile(name="", content=request.content)
-    
-    file.name = "main.py"
-    payload = {"files": [file.dict()], "command": "python main.py"}
+    payload = serverless_payload_from_request(request)
 
     async with aiohttp.ClientSession(
     ) as session:
-        url = settings.serverless_url
+        url = getattr(settings, f'serverless_url_{request.language}')
         headers = {"Content-Type": "application/json"}
 
         url = urljoin(url, "run/")
@@ -33,7 +49,5 @@ async def snippet_run(request: RunSnippetRequest):
         ) as resp:
             if resp.status == HTTPStatus.OK:
                 resp_json = await resp.json()
-
-                print(resp_json)
 
                 return ServerlessResponse(**resp_json)

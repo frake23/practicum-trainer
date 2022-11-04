@@ -6,6 +6,6 @@
     ]
   },
   "python": {
-    "command": "pyls"
+    "command": "pyls -v"
   }
 }
