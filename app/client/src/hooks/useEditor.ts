@@ -4,7 +4,10 @@ import { EditorState, Text } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "@uiw/codemirror-extensions-basic-setup";
 import { githubLight } from "@uiw/codemirror-theme-github";
-import { CodeMirrorLanguageClient } from "codemirror-languageserver";
+import {
+	CodeMirrorLanguageClient,
+	BaseLanguageClientOptions,
+} from "codemirror-languageserver";
 import { useEffect, useRef, useState } from "react";
 import { AvailableLanguages, languageToExtensionMap } from "../constants";
 import { usePrevProp } from "./usePrevProps";
@@ -12,6 +15,7 @@ import { usePrevProp } from "./usePrevProps";
 type UseEditorOptions = {
 	languageId: AvailableLanguages;
 	documentUri: string;
+	workspaceFolders: BaseLanguageClientOptions["workspaceFolders"];
 };
 
 export const useEditor = (
@@ -19,7 +23,6 @@ export const useEditor = (
 	options: UseEditorOptions
 ) => {
 	const { languageId, documentUri } = options;
-
 	const [parent, setParent] = useState<HTMLDivElement>();
 
 	useEffect(() => setParent(container!), [container]);
@@ -44,8 +47,6 @@ export const useEditor = (
 	useEffect(() => {
 		if (!parent) return;
 
-		console.log(view);
-
 		setView(
 			new EditorView({
 				parent,
@@ -54,12 +55,13 @@ export const useEditor = (
 	}, [parent, setView]);
 
 	useEffect(() => {
-		if (!view) return;
+		if (!view || !languageId) return;
 
 		const client = new CodeMirrorLanguageClient({
 			documentUri,
 			languageId,
-			serverUri: "ws://localhost:8080",
+			serverUri: "ws://localhost:8083",
+			workspaceFolders: options.workspaceFolders
 		});
 
 		const theme = EditorView.theme({
@@ -82,7 +84,7 @@ export const useEditor = (
 		});
 
 		view.setState(state);
-	}, [view, documentUri]);
+	}, [view, documentUri, languageId]);
 
 	useEffect(() => {
 		() => {

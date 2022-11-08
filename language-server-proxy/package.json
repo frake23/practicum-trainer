@@ -12,7 +12,9 @@
   },
   "scripts": {
     "dev": "nodemon",
-    "start-ls": "typescript-language-server"
+    "start-ls": "typescript-language-server",
+    "build": "tsc",
+    "start": "yarn build && node dist/index.js"
   },
   "type": "module"
 }

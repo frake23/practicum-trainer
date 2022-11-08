@@ -1,10 +1,4 @@
 from pydantic import BaseModel
-from enum import Enum
-
-
-class Languages(str, Enum):
-    python = 'python'
-    golang = 'golang'
 
 
 class ServerlessFile(BaseModel):
@@ -19,6 +13,5 @@ class ServerlessResponse(BaseModel):
     stdout: str
 
 
-class RunSnippetRequest(BaseModel):
-    content: str
-    language: Languages
+class ShareSnippetResponse(BaseModel):
+    id: str

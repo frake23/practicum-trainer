@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .db import init_db
+
 from .snippet.router import router as snippet_router
 
 app = FastAPI()
@@ -18,4 +20,8 @@ app.add_middleware(
 )
 
 app.include_router(snippet_router)
+
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
 

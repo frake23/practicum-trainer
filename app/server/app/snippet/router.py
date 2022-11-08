@@ -1,10 +1,17 @@
 from http import HTTPStatus
 from urllib.parse import urljoin
-from fastapi import APIRouter
+from uuid import UUID
+from fastapi import APIRouter, Depends
 import aiohttp
-from ..config import settings
+from sqlalchemy.future import select
 
-from .schemas import Languages, RunSnippetRequest, ServerlessFile, ServerlessResponse
+
+from .enums import Languages
+from ..config import settings
+from ..db import get_session
+from .schemas import ServerlessFile, ServerlessResponse, ShareSnippetResponse
+from .models import Snippet, SnippetBase
+
 
 router = APIRouter(
     prefix="/snippet",
@@ -12,16 +19,16 @@ router = APIRouter(
 )
 
 
-def serverless_payload_from_request(request: RunSnippetRequest) -> dict:
+def serverless_payload_from_request(request: SnippetBase) -> dict:
     language = request.language
 
     files = {
-        Languages.golang.value: 'main.go',
+        Languages.go.value: 'main.go',
         Languages.python.value: 'main.py'
     }
 
     commands = {
-        Languages.golang.value: f'go run {files[Languages.golang.value]}',
+        Languages.go.value: f'go run {files[Languages.go.value]}',
         Languages.python.value: f'python {files[Languages.python.value]}'
     }
 
@@ -31,7 +38,7 @@ def serverless_payload_from_request(request: RunSnippetRequest) -> dict:
 
 
 @router.post('/run', response_model=ServerlessResponse)
-async def snippet_run(request: RunSnippetRequest):
+async def snippet_run(request: SnippetBase):
     payload = serverless_payload_from_request(request)
 
     async with aiohttp.ClientSession(
@@ -51,3 +58,33 @@ async def snippet_run(request: RunSnippetRequest):
                 resp_json = await resp.json()
 
                 return ServerlessResponse(**resp_json)
+
+
+@router.post('/share', response_model=ShareSnippetResponse)
+async def snippet_share(request: SnippetBase, session=Depends(get_session)):
+    result = await session.execute(
+        select(Snippet).where(
+            Snippet.language == request.language,
+            Snippet.content == request.content
+        )
+    )
+    snippet = result.scalars().one_or_none()
+
+    if snippet:
+        return ShareSnippetResponse(id=str(snippet.id))
+
+    snippet = Snippet(**request.dict())
+
+    session.add(snippet)
+    await session.commit()
+    await session.refresh(snippet)
+
+    return ShareSnippetResponse(id=str(snippet.id))
+
+
+@router.get('/share/{snippet_id}', response_model=SnippetBase)
+async def snippet_share(snippet_id: UUID, session=Depends(get_session)):
+    result = await session.execute(select(Snippet).where(Snippet.id == snippet_id))
+    snippet = result.scalars().one()
+
+    return SnippetBase(**snippet.__dict__)

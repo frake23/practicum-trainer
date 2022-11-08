@@ -1,8 +1,10 @@
-export const mapFromEnum = <T extends Record<string, string | number>> (enm: T) => {
+export const mapFromEnum = <T extends Record<string, string | number>>(
+  enm: T
+) => {
   return Object.fromEntries(
     Object.entries(enm).map(([key, value]) => [value, key])
-  ) as Record<T[keyof T], keyof T>
-}
+  ) as Record<T[keyof T], keyof T>;
+};
 
 export enum CompletionItemKind {
   Text = 1,
@@ -48,6 +50,6 @@ export enum InsertTextMode {
 }
 
 export enum MarkupKind {
-  PlainText = 'plaintext',
-  Markdown = 'markdown',
+  PlainText = "plaintext",
+  Markdown = "markdown",
 }

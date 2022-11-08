@@ -1,50 +1,65 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Select from "react-select";
 import { useEditor } from "../hooks/useEditor";
 import { PlayIcon } from "@heroicons/react/24/solid";
-import { useMutation } from "@tanstack/react-query";
-import { postRunSnippet } from "../api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getShareSnippet, postRunSnippet } from "../api";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useNavigate, useParams } from "react-router-dom";
+import { ShareButton } from "../components/ShareButton";
+import { Text } from "@codemirror/state";
+import { SplitEditor } from "../components/SplitEditor";
+import { AvailableLanguages } from "../constants";
 
 const options = [
 	{ value: "python", label: "Python" },
-	{ value: "javascript", label: "Javascript" },
+	{ value: "go", label: "Go" },
 ] as const;
 
+const usedLanguages = Object.values(options).map((option) => option.value) as string[];
+
 export const HomePage = () => {
-	const [option, setOption] = useState<typeof options[number] | null>(
-		options[0]
-	);
+	const { entity } = useParams();
 
-	const [stdout, setStdout] = useState("");
-	const [stderr, setStderr] = useState("");
+	const navigate = useNavigate();
 
-	const editorRef = useRef(null);
-	const { view } = useEditor(editorRef.current, {
-		languageId: option?.value!,
-		documentUri: `user/${option?.value}`,
+	const [snippetId] = useState(() => {
+		if (usedLanguages.includes(entity!)) {
+			return null;
+		}
+
+		return entity ?? null;
 	});
 
-	const a = useMutation(['code'], postRunSnippet);
-	a.data?.json()
+	const [option, setOption] = useState<typeof options[number] | null>(null);
 
-	const onCodeRun = async () => {
-		const content = view?.state.doc.sliceString(0);
+	const { data, isLoading } = useQuery(
+		["snippets", snippetId],
+		() => getShareSnippet({ snippetId: snippetId! }),
+		{ enabled: !!snippetId }
+	);
 
-		const resp = await fetch("http://localhost:8082/snippet/run", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				content,
-			}),
-		});
+	useEffect(() => {
+		if (!snippetId && !usedLanguages.includes(entity!)) {
+			return navigate(`/${options[0].value}`);
+		}
 
-		const { stdout, stderr } = await resp.json();
+		if (data) {
+			navigate(`/${data.language}`);
+		}
+	}, [snippetId, data]);
 
-		setStdout(stdout);
-		setStderr(stderr);
-	};
+	useEffect(() => {
+		const option = Object.values(options).find(
+			(option) => option.value === entity
+		);
+
+		setOption(option!);
+	}, [entity]);
+
+	if ((isLoading && snippetId) || !option) {
+		return <LoadingSpinner className='w-10 h-10 m-auto' />;
+	}
 
 	return (
 		<div>
@@ -52,28 +67,16 @@ export const HomePage = () => {
 				<div className='flex items-center gap-6 mb-2'>
 					<span className=''>Язык программирования</span>
 					<Select
+						value={option}
 						defaultValue={option}
-						onChange={setOption}
+						onChange={(option) => navigate(`/${option!.value}`)}
 						options={options}
 					/>
 				</div>
-				<div className='flex gap-4 relative'>
-					<div
-						ref={editorRef}
-						className='basis-1/2 rounded-xl shadow-md'
-					/>
-					<div className='basis-1/2 rounded-xl shadow-md p-8 whitespace-pre-line text-sm font-mono'>
-						<div className='text-red-400'>{stderr}</div>
-						<div className='text-green-400'>{stdout}</div>
-					</div>
-					<button
-						className='absolute mx-auto bg-green-500 rounded-full p-4 translate-x-1/2 -translate-y-1/2 right-1/2 text-green-300 flex items-center gap-1'
-						onClick={onCodeRun}
-					>
-						<PlayIcon className="w-4"/>
-						Запустить
-					</button>
-				</div>
+				<SplitEditor
+					language={option?.value}
+					initText={data?.content ?? ""}
+				/>
 			</div>
 		</div>
 	);

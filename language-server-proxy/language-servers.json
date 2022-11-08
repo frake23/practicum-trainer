@@ -5,7 +5,10 @@
       "--stdio"
     ]
   },
+  "go": {
+    "command": "gopls"
+  },
   "python": {
-    "command": "pyls -v"
+    "command": "pyls"
   }
 }
