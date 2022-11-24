@@ -36,7 +36,7 @@ export const ShareButton = ({
 
 	return (
 		<button
-			className={`flex items-center gap-1 p-2 text-sm rounded-md bg-blue-500 text-blue-300 ${
+			className={`flex items-center gap-1 p-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-all ${
 				className ?? ""
 			}`}
 			onClick={onShare}

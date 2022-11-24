@@ -61,12 +61,12 @@ export const useEditor = (
 			documentUri,
 			languageId,
 			serverUri: "ws://localhost:8083",
-			workspaceFolders: options.workspaceFolders
+			workspaceFolders: options.workspaceFolders,
 		});
 
 		const theme = EditorView.theme({
 			"&": {
-				height: "400px",
+				height: "450px",
 			},
 		});
 

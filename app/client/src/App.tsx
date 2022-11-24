@@ -3,20 +3,30 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { HomePage } from "./pages/Home";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
+import { LoginPage } from "./pages/Login";
+import { RegisterPage } from "./pages/Register";
 
 import "react-toastify/dist/ReactToastify.min.css";
+import { ProblemsPage } from "./pages/Problems";
+import { ProblemPage } from "./pages/Problem";
 
 const queryClient = new QueryClient();
 
 function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<div className='flex flex-col'>
+			<div className='flex flex-col h-screen'>
 				<Header />
 				<Routes>
 					<Route path='/' element={<Navigate to='/python' />} />
-					<Route path='/problems' element={<div />} />
-					<Route path='/:entity/*' element={<HomePage />} />
+					<Route path='/login' element={<LoginPage />} />
+					<Route path='/register' element={<RegisterPage />} />
+					<Route path='/problems' element={<ProblemsPage />} />
+					<Route
+						path='/problems/:problemId'
+						element={<ProblemPage />}
+					/>
+					<Route path='/:entity' element={<HomePage />} />
 				</Routes>
 			</div>
 			<ToastContainer

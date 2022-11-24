@@ -10,3 +10,33 @@ export const languageToExtensionMap = {
 };
 
 export type AvailableLanguages = keyof typeof languageToExtensionMap;
+
+export const options = [
+	{ value: "python", label: "Python" },
+	{ value: "go", label: "Go" },
+] as const;
+
+export const usedLanguages = Object.values(options).map(
+	(option) => option.value
+) as string[];
+
+export interface UserBase {
+	username: string;
+}
+
+export interface Token {
+	accessToken: string;
+	tokenType: string;
+}
+
+export interface ProblemBase {
+	name: string;
+	text: string;
+	complexity: number;
+}
+
+export interface SolutionBase {
+	content: string;
+	language: AvailableLanguages;
+	solved?: boolean | null;
+}

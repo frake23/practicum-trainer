@@ -2,9 +2,8 @@ FROM ubuntu:18.04 AS go
 RUN apt-get update \
 	&& apt-get upgrade -y \
 	&& apt-get install -y wget \
-	&& export LATEST_VERSION=`wget -qO- https://golang.org/dl | grep -oE go[0-9]+\.[0-9]+\.[0-9]+\.linux-amd64\.tar\.gz | head -n 1` \
-	&& wget -c https://dl.google.com/go/$LATEST_VERSION \
-	&& tar -xzf $LATEST_VERSION
+	&& wget -c https://dl.google.com/go/go1.19.3.linux-amd64.tar.gz \
+	&& tar -xzf go1.19.3.linux-amd64.tar.gz
 
 FROM node:18
 
@@ -29,6 +28,8 @@ RUN pip3 install 'python-language-server[all]'
 RUN yarn
 
 COPY . .
+
+RUN cd / && go mod init practicum-trainer
 
 EXPOSE 8080
 

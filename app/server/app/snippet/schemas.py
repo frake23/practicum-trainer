@@ -1,4 +1,18 @@
+from uuid import UUID, uuid4
+
 from pydantic import BaseModel
+from sqlmodel import Field, SQLModel
+
+from app.enums import Languages
+
+
+class SnippetBase(SQLModel):
+    content: str
+    language: Languages
+
+
+class Snippet(SnippetBase, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
 
 
 class ServerlessFile(BaseModel):
@@ -14,4 +28,4 @@ class ServerlessResponse(BaseModel):
 
 
 class ShareSnippetResponse(BaseModel):
-    id: str
+    id: UUID

@@ -12,7 +12,7 @@ interface SplitEditorProps {
 	initText: string;
 }
 
-export const SplitEditor = ({ language, initText }: SplitEditorProps) => {
+export const HomeSplitEditor = ({ language, initText }: SplitEditorProps) => {
 	const { mutate, data, isLoading } = useMutation(postRunSnippet);
 
 	const editorRef = useRef(null);
@@ -62,7 +62,7 @@ export const SplitEditor = ({ language, initText }: SplitEditorProps) => {
 				)}
 			</div>
 			<button
-				className='absolute mx-auto bg-green-500 rounded-full p-4 translate-x-1/2 -translate-y-1/2 right-1/2 text-green-300 flex items-center gap-1'
+				className='absolute mx-auto bg-green-500 hover:bg-green-600 transition-all rounded-full p-4 translate-x-1/2 -translate-y-1/2 right-1/2 text-white flex items-center gap-1'
 				onClick={onCodeRun}
 			>
 				<PlayIcon className='w-4' />

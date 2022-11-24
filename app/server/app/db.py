@@ -1,8 +1,10 @@
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Field
+
+from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from .config import settings
+from .settings import settings
 
 engine = create_async_engine(settings.db_url, echo=True, future=True)
 
@@ -19,3 +21,7 @@ async def get_session() -> AsyncSession:
     )
     async with async_session() as session:
         yield session
+
+
+class TimestampMixin(SQLModel):
+    date_created: datetime = Field(default_factory=datetime.now)

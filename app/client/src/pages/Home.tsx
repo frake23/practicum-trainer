@@ -1,35 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Select from "react-select";
-import { useEditor } from "../hooks/useEditor";
-import { PlayIcon } from "@heroicons/react/24/solid";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { getShareSnippet, postRunSnippet } from "../api";
+import { useQuery } from "@tanstack/react-query";
+import { getShareSnippet } from "../api";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useNavigate, useParams } from "react-router-dom";
-import { ShareButton } from "../components/ShareButton";
-import { Text } from "@codemirror/state";
-import { SplitEditor } from "../components/SplitEditor";
-import { AvailableLanguages } from "../constants";
+import { HomeSplitEditor } from "../components/HomeSplitEditor";
+import { options, usedLanguages } from "../constants";
 
-const options = [
-	{ value: "python", label: "Python" },
-	{ value: "go", label: "Go" },
-] as const;
-
-const usedLanguages = Object.values(options).map((option) => option.value) as string[];
 
 export const HomePage = () => {
 	const { entity } = useParams();
 
 	const navigate = useNavigate();
 
-	const [snippetId] = useState(() => {
-		if (usedLanguages.includes(entity!)) {
-			return null;
-		}
-
-		return entity ?? null;
-	});
+	const { current: snippetId } = useRef<string | null>(
+		usedLanguages.includes(entity!) ? null : entity!
+	);
 
 	const [option, setOption] = useState<typeof options[number] | null>(null);
 
@@ -40,12 +26,12 @@ export const HomePage = () => {
 	);
 
 	useEffect(() => {
-		if (!snippetId && !usedLanguages.includes(entity!)) {
-			return navigate(`/${options[0].value}`);
+		if (snippetId && data && data.language) {
+			return navigate(`/${data.language}`);
 		}
 
-		if (data) {
-			navigate(`/${data.language}`);
+		if (!usedLanguages.includes(entity!)) {
+			return navigate(`/${options[0].value}`);
 		}
 	}, [snippetId, data]);
 
@@ -62,22 +48,20 @@ export const HomePage = () => {
 	}
 
 	return (
-		<div>
-			<div className='container mx-auto py-32 flex flex-col'>
-				<div className='flex items-center gap-6 mb-2'>
-					<span className=''>Язык программирования</span>
-					<Select
-						value={option}
-						defaultValue={option}
-						onChange={(option) => navigate(`/${option!.value}`)}
-						options={options}
-					/>
-				</div>
-				<SplitEditor
-					language={option?.value}
-					initText={data?.content ?? ""}
+		<div className='container mx-auto my-32 flex flex-col px-4'>
+			<div className='flex items-center gap-6 mb-2'>
+				<span className=''>Язык программирования</span>
+				<Select
+					value={option}
+					defaultValue={option}
+					onChange={(option) => navigate(`/${option!.value}`)}
+					options={options}
 				/>
 			</div>
+			<HomeSplitEditor
+				language={option?.value}
+				initText={data?.content ?? ""}
+			/>
 		</div>
 	);
 };
