@@ -1,7 +1,7 @@
 from jose import jwt
 from passlib.context import CryptContext
 
-from ..settings import settings
+from app.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated='auto')
 

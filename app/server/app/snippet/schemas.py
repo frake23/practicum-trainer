@@ -15,12 +15,6 @@ class Snippet(SnippetBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
 
 
-class ServerlessFile(BaseModel):
-    name: str
-    content: str
-    is_base64_encoded: bool | None
-
-
 class ServerlessResponse(BaseModel):
     exit_code: int
     stderr: str

@@ -1,6 +1,6 @@
 from sqladmin import ModelView
 
-from .schemas import Problem, Solution, ProblemTest
+from app.problem.schemas import Problem, Solution, ProblemTest
 
 
 class ProblemAdmin(ModelView, model=Problem):

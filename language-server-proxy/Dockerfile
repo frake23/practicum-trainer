@@ -2,8 +2,8 @@ FROM ubuntu:18.04 AS go
 RUN apt-get update \
 	&& apt-get upgrade -y \
 	&& apt-get install -y wget \
-	&& wget -c https://dl.google.com/go/go1.19.3.linux-amd64.tar.gz \
-	&& tar -xzf go1.19.3.linux-amd64.tar.gz
+	&& wget -c https://dl.google.com/go/go1.19.3.linux-arm64.tar.gz \
+	&& tar -xzf go1.19.3.linux-arm64.tar.gz
 
 FROM node:18
 

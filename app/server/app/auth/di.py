@@ -5,8 +5,8 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 
-from .schemas import User
-from .utils import get_decoded_data
+from app.auth.schemas import User
+from app.auth.utils import get_decoded_data
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="auth/token", auto_error=False)

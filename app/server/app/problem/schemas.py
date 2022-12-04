@@ -5,18 +5,18 @@ from sqlmodel import Field, SQLModel, Relationship
 
 from app.db import TimestampMixin
 
-from ..enums import Languages
-from ..auth.schemas import User
+from app.enums import Languages
+from app.auth.schemas import User
 
 
 class ProblemBase(SQLModel):
     name: str
     text: str
-    complexity: int = Field(ge=1, le=5)
 
 
 class Problem(ProblemBase, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
+    complexity: int = Field(ge=1, le=5)
 
     tests: list['ProblemTest'] | None = Relationship(back_populates="problem")
 
@@ -29,6 +29,11 @@ class ProblemTest(SQLModel, table=True):
     problem_id: UUID = Field(foreign_key="problem.id")
 
     problem: Problem | None = Relationship(back_populates="tests")
+
+
+class SolveProblemRequest(BaseModel):
+    content: str
+    language: Languages
 
 
 class SolutionBase(SQLModel):

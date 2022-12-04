@@ -1,15 +1,14 @@
-from http import HTTPStatus
-from urllib.parse import urljoin
 from uuid import UUID
 
-import aiohttp
-from fastapi import APIRouter, Depends
-from sqlmodel import Session, select
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..db import get_session
-from ..enums import Languages
-from ..settings import settings
-from .schemas import (ServerlessFile, ServerlessResponse, ShareSnippetResponse,
+from app.code import check_code, serverless_payload_from_request
+
+from app.db import get_session
+from app.snippet.schemas import (ServerlessResponse, ShareSnippetResponse,
                       Snippet, SnippetBase)
 
 router = APIRouter(
@@ -18,49 +17,26 @@ router = APIRouter(
 )
 
 
-def serverless_payload_from_request(request: SnippetBase) -> dict:
-    language = request.language
-
-    files = {
-        Languages.go.value: 'main.go',
-        Languages.python.value: 'main.py'
-    }
-
-    commands = {
-        Languages.go.value: f'go run {files[Languages.go.value]}',
-        Languages.python.value: f'python {files[Languages.python.value]}'
-    }
-
-    file = ServerlessFile(name=files[language], content=request.content)
-
-    return {"files": [file.dict()], "command": commands[language]}
-
-
 @router.post('/run', response_model=ServerlessResponse)
 async def snippet_run(request: SnippetBase):
-    payload = serverless_payload_from_request(request)
+    payload = serverless_payload_from_request(
+        language=request.language, content=request.content,)
 
-    async with aiohttp.ClientSession(
-    ) as session:
-        url = getattr(settings, f'serverless_url_{request.language}')
-        headers = {"Content-Type": "application/json"}
+    async with httpx.AsyncClient(
+    ) as client:
+        result = await check_code(client=client, language=request.language, payload=payload,)
 
-        url = urljoin(url, "run/")
-        headers["Authorization"] = f"Api-Key {settings.serverless_bot_token}"
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Error while request to serverless"
+            )
 
-        async with session.post(
-            url=url,
-            json=payload,
-            headers=headers,
-        ) as resp:
-            if resp.status == HTTPStatus.OK:
-                resp_json = await resp.json()
-
-                return resp_json
+        return result
 
 
 @router.post('/share', response_model=ShareSnippetResponse)
-async def snippet_share(request: SnippetBase, session: Session = Depends(get_session)):
+async def snippet_share(request: SnippetBase, session: AsyncSession = Depends(get_session)):
     result = await session.execute(
         select(Snippet).where(
             Snippet.language == request.language,
@@ -81,9 +57,15 @@ async def snippet_share(request: SnippetBase, session: Session = Depends(get_ses
 
 
 @router.get('/share/{snippet_id}', response_model=SnippetBase | None)
-async def snippet_share(snippet_id: UUID, session: Session = Depends(get_session)):
+async def snippet_share(snippet_id: UUID, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Snippet).where(Snippet.id == snippet_id))
 
     snippet = result.scalar_one_or_none()
+
+    if snippet is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='snippet not found',
+        )
 
     return snippet
