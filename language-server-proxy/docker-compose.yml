@@ -1,0 +1,12 @@
+version: "3.9"
+   
+services:
+  go-ls:
+    build: ./go
+  python-ls:
+    build: ./python
+  proxy:
+    build: ./proxy
+    ports:
+      - "8083:8080"
+    
