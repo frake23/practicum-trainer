@@ -55,6 +55,7 @@ class Solution(SolutionBase, TimestampMixin, table=True):
 class GetProblemsResponseItem(ProblemBase):
     id: UUID
     solved: bool | None
+    complexity: int | None
 
 
 class GetProblemResponse(ProblemBase):

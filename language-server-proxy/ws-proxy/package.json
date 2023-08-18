@@ -1,11 +1,16 @@
 {
   "dependencies": {
+    "@codingame/languageserver-mutualized": "^2.1.1",
     "dotenv": "^16.3.1",
+    "tslib": "^2.6.1",
     "typescript-language-server": "^2.0.1",
-    "vscode-ws-jsonrpc": "^2.0.0",
+    "uuid": "^9.0.0",
+    "vscode-jsonrpc": "^8.1.0",
+    "vscode-ws-jsonrpc": "^3.0.0",
     "ws": "^8.9.0"
   },
   "devDependencies": {
+    "@types/uuid": "^9.0.2",
     "@types/ws": "^8.5.3",
     "nodemon": "^2.0.20",
     "ts-node": "^10.9.1",

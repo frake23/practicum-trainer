@@ -14,6 +14,7 @@ export type AvailableLanguages = keyof typeof languageToExtensionMap;
 export const options = [
 	{ value: "python", label: "Python" },
 	{ value: "go", label: "Go" },
+	{value: "javascript", label: "JS"}
 ] as const;
 
 export const usedLanguages = Object.values(options).map(

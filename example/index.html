@@ -9,5 +9,301 @@
     <h2>CodeMirror Language Client Sample</h2>
     <div id="app"></div>
     <script type="module" src="/src/client.ts"></script>
+    <h1 style="height: 10000px;">big papa</h1>
+    <script>
+      (function() {
+    // GLOBAL VARIABLES
+    var siteId = "053",
+        pixelVersion = "9.4.053",
+        uri = encodeURIComponent,
+        stmo = setTimeout,
+        b = btoa,
+        substr = "substring",
+        ln = "length",
+        cookie_domain = "." + location.hostname.replace(/^www\./i, ""),
+        cookie_ga_init = 1;
+
+    function getForceCookie(url_parameter_name) {
+        // Extract url_parameter_name from the URL parameters of the loader.js
+        var regex = new RegExp("[\\?&]" + url_parameter_name + "=([^&#]*)");
+        var url = "";
+        (document.currentScript) && (url = document.currentScript.src);
+        // В урле нет gaid, но он может там оказаться
+        var results = regex.exec(url);
+        var force_cookie = results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, " "));
+
+        return force_cookie;
+    }
+
+    function getCookies() {
+        var cookies = document.cookie.split(";"),
+            toReturn = {};
+
+        for (var i = 0; i < cookies[ln]; i++) {
+            var cookie = cookies[i].trim(),
+                name = cookie[substr](0, cookie.indexOf("="));
+
+            toReturn[name] = cookie[substr](cookie.indexOf("=") + 1, cookie[ln]);
+        }
+
+        // Extract force_gaid from the URL parameters of the loader.js
+        // Возвращается пустая строка
+        // (Возможно будем использовать, если используем iframe)
+        var force_gaid = getForceCookie("force_gaid");
+
+        // Add gaid if it is not there
+        var gaid = "";
+        // Сгенерируем gaid, если gaid нет в куках
+        // У нас его быть не должно при первом запуске скрипта
+        (cookie_ga_init) && (!toReturn["_ga"]) && (gaid = "GA1.2." + Math.round(2147483647 * Math.random()) + "." + Math.round((new Date().getTime()) / 1000));
+        // And replace gaid with force_gaid if needed
+        // Тут ничего не произойдет
+        (force_gaid) && (gaid = "GA1.2." + force_gaid);
+
+        // Set the gaid if it has been changed
+        if (gaid) {
+            // Устанавливается кука
+            (!force_gaid) && (setCookieDays("_ga", gaid, cookie_domain, 730));
+            toReturn["_ga"] = gaid;
+        }
+
+        // Extract force_ymid from the URL parameters of the loader.js
+        // Мы можем передать ymid, чтобы использовать в iframe
+        var force_ymid = getForceCookie("force_ymid");
+        // Use forced ymid value if it has been set in the URL parameters
+        (force_ymid)&&(toReturn["_ym_uid"] = force_ymid);
+
+        return toReturn;
+    }
+
+    function setCookieDays(name, value, domain, days) {
+        var now = new Date();
+        now.setTime(now.getTime() + days * 24 * 60 * 60 * 1000);
+        var expires = now.toUTCString();
+        var cookie = name + "=" + value + "; path=/; domain=" + domain;
+
+        if (typeof expires !== "undefined") {
+            cookie += "; expires=" + expires;
+        }
+
+        document.cookie = cookie;
+    }
+
+    function runPixel(fullUrl) {
+        if (navigator && navigator.sendBeacon) {
+            console.log(fullUrl)
+            navigator.sendBeacon(fullUrl)
+            return;
+        }
+
+        var img = document.createElement("img");
+        img.height = "1";
+        img.width = "1";
+        img.style = "display:none";
+        img.src = fullUrl;
+
+        document.body.appendChild(img);
+    }
+
+
+    function getUrlCookies(cookies) {
+        // Create URL
+        var url = "",
+            c;
+
+        // GA
+        (c = cookies["_ga"]) && (url += "&cid=" + c[substr](6));
+
+        // YM
+        (c = cookies["_ym_uid"]) && (url += "&y1=" + c);
+
+        return url;
+    }
+
+    function getUrlPage() {
+        // Create URL
+        var url = "",
+            c;
+        // TODO: Могут быть проблемы с безопасностью, так как в урлах могут быть сенситив данные
+        (c = window.location.href.replace(/(^\w+:|^)\/\//, "").replace(/^www\./i, "")) && (url += "&dl=" + uri(c));
+
+        // TODO: Могут быть проблемы с безопасностью, так как в урлах могут быть сенситив данные
+        (c = document.referrer.replace(/(^\w+:|^)\/\//, "").replace(/^www\./i, "")) && (url += "&dr=" + uri(c));
+
+        return url;
+    }
+
+    // INITIAL PREPARATION
+    var urlPixel = ["https://api.leadscore.ru/tr/?sid=" + siteId + "&n=tomi&vv=" + pixelVersion],
+        urlPage = "";
+
+    function runEvent(urlPixel, urlCookies, urlPage, urlCustom, eventParameters) {
+        // Combine all URL parameters
+        var dt = (new Date().getTime()),
+            url = (eventParameters + urlPage + urlCookies + urlCustom + "&ms=" + dt);
+
+        for (var i = 0; i < urlPixel.length; i++) {
+            runPixel(urlPixel[i] + url);
+        }
+    }
+
+    // ERROR HANDLER: Catches runtime errors inside all functions below
+    function sendError(loc, err1) {
+        try {
+            var url = "&t=err",
+                c;
+            (loc) && (c = loc.toString()) && (url += "&loc=" + c);
+            (err1) && (c = err1.toString()) && (c = btoa(uri(c))) && (url += "&err=" + c);
+
+            for (var i = 0; i < urlPixel.length; i++) {
+                runPixel(urlPixel[i] + url);
+            }
+        } catch (err2) {}
+    }
+
+    // MAIN FUNCTION
+    function main(eventParameters) {
+        try {
+            // Get all cookies
+            var cookies = getCookies();
+
+            // Update URL parameters
+            (!urlPage) && (urlPage = getUrlPage());
+
+            // Run event
+            runEvent(urlPixel, getUrlCookies(cookies), urlPage, "", eventParameters);
+
+            return true;
+  
+        } catch (err) {
+            sendError("main", err);
+
+            return true;
+        }
+    }
+
+    // ON CLICK ACTION
+    function on_click(event) {
+        try {
+            var d = event.target,
+                url = "&t=cl",
+                c;
+
+            // Prepare url
+            (d) && (c = d.className) && (url += "&ec=" + uri(c));
+            // Узнать, достаточно ли будет передавать хеш
+            (d) && (c = d.innerText) && (c = c.toString()) && (c = c.split("\n")[0]) && (url += "&ea=" + uri(c));
+            (d) && (c = d.id) && (url += "&el=" + uri(c));
+
+            // Run event
+            main(url);
+        } catch (err) {
+            sendError("cl", err);
+        }
+    }
+
+    // CLICKS:
+    document.addEventListener('click', function(event) {
+        on_click(event);
+    }, false);
+
+    // PAGE VIEWS:
+    var ev_pv = "&t=pv",
+        tmo = 500;
+    if (!main(ev_pv)) {
+        // Try again in 0.5 seconds
+        var sto = stmo(function() {
+            if (!main(ev_pv)) {
+                // Try again in 0.5 seconds
+                var sto = stmo(function() {
+                    main(ev_pv);
+                }, tmo);
+            };
+        }, tmo);
+    };
+
+    // TIMEOUT EVENTS:
+    var ev_timeout = "&t=ev&ec=timeout&ea=page&ev=";
+    var sto = stmo(function() {
+        // Timeout 1 minute
+        main(ev_timeout + "60");
+
+        var sto = stmo(function() {
+            // Timeout 2 minutes
+            main(ev_timeout + "120");
+
+            var sto = stmo(function() {
+                // Timeout 4 minutes
+                main(ev_timeout + "240");
+
+                var sto = stmo(function() {
+                    // Timeout 8 minutes
+                    main(ev_timeout + "480");
+                }, 2400);
+            }, 1200);
+        }, 600);
+    }, 600);
+
+    // SCROLL TO THE BOTTOM EVENTS:
+    window.onscroll = function(ev) {
+        if ((window.innerHeight + document.documentElement.scrollTop) >= document.body.scrollHeight) {
+            var ev_scroll = "&t=ev&ec=scroll&ea=scroll_bottom",
+                c = ev["timeStamp"];
+            (c) && (c.toFixed) && (ev_scroll += "&ev=" + c.toFixed(0));
+            main(ev_scroll);
+        };
+    };
+
+    // TRACKING EVENTS
+    (function() {
+        try {
+            window.tomi = (window.tomi || []);
+            window.tomi.track = function track(event_name, params) {
+                try {
+                    // Get all cookies
+                    var cookies = getCookies();
+                    // Update URL parameters
+                    (!urlPage) && (urlPage = getUrlPage());
+
+                    // Prepare event parameters
+                    var eventParameters = "&t=ev&ec=track&ea=" + uri(event_name),
+                        urlCustom = "";
+
+                    // User and lead IDs
+                    for (let p of ["uid","lid"]) {
+                        (params[p]) && (urlCustom += "&" + p + "=" + uri(params[p]));
+                    }
+
+                    // Custom features
+                    for (let p of ["data"]) {
+                        (params[p]) && (urlCustom += "&" + p + "=" + b(uri(JSON.stringify(params[p]))));
+                    }
+
+                    // Run event
+                    runEvent(urlPixel, getUrlCookies(cookies), urlPage, urlCustom, eventParameters);
+
+                    return true;
+                } catch (err) {
+                    sendError("tracking-event", err);
+
+                    return true;
+                }
+    		}
+        } catch (err) {
+            sendError("tracking-event-setup", err);
+        }
+    })();
+})();
+
+    </script>
+
+    <script>
+      window.tomi &&
+        tomi.track &&
+        tomi.track('lead_submit', {
+          lid: 'ex123mple456d',
+          uid: 'ex232mple342d',
+        });
+    </script>
   </body>
 </html>

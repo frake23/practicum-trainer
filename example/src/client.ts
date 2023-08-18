@@ -1,19 +1,20 @@
 import {CodeMirrorLanguageClient} from "codemirror-languageserver";
 import {EditorView, basicSetup} from 'codemirror';
 import {EditorState} from "@codemirror/state";
-import {javascript} from '@codemirror/lang-javascript';
+import {python} from '@codemirror/lang-python';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { v4 } from "uuid";
 
 const codeMirrorClient = new CodeMirrorLanguageClient({
-    documentUri: 'user',
-    languageId: 'javascript',
-    serverUri: 'ws://localhost:8080'
+    documentUri: `file://${v4()}`,
+    languageId: 'python',
+    serverUri: 'ws://localhost:8083'
 });
 
 let state = EditorState.create({
     extensions: [
         basicSetup,
-        javascript(),
+        python(),
         codeMirrorClient.definePluginWithExtensions(),
         oneDark
     ]

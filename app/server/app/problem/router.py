@@ -97,7 +97,7 @@ async def solve_problem(request: SolveProblemRequest, problem_id: UUID, user: Us
                 )
 
             solved = result["stderr"] == '' and result['stdout'].split(
-                '\n') == problem.tests[i].output.split('\n')
+                '\n') == (problem.tests[i].output + '\n').split('\n')
 
             if not solved:
                 solution_solved = False

@@ -79,11 +79,11 @@ async def test_get_problems(user_client: AsyncClient, anon_client: AsyncClient, 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == [
         {'name': problem3.name, 'text': problem3.text,
-            'id': str(problem3.id), 'solved': True},
+            'id': str(problem3.id), 'solved': True, 'complexity': problem1.complexity},
         {'name': problem2.name, 'text': problem2.text,
-            'id': str(problem2.id), 'solved': False},
+            'id': str(problem2.id), 'solved': False, 'complexity': problem2.complexity},
         {'name': problem1.name, 'text': problem1.text,
-            'id': str(problem1.id), 'solved': None},
+            'id': str(problem1.id), 'solved': None, 'complexity': problem3.complexity},
     ]
 
 
@@ -103,12 +103,12 @@ async def test_solve_problem(user_client: AsyncClient, anon_client: AsyncClient,
     test2 = await save_entity(db_session, ProblemTest(input='some input 1', output='some output 1', problem_id=problem.id))
 
     mock_responses = [
-        dict(exit_code=0, stderr='', stdout=test1.output,),
-        dict(exit_code=0, stderr='', stdout=test2.output,),
-        dict(exit_code=0, stderr='', stdout=test1.output),
+        dict(exit_code=0, stderr='', stdout=test1.output + '\n',),
+        dict(exit_code=0, stderr='', stdout=test2.output+ '\n',),
+        dict(exit_code=0, stderr='', stdout=test1.output+ '\n'),
         dict(exit_code=0, stderr='somerr', stdout=''),
-        dict(exit_code=0, stderr='', stdout=test1.output),
-        dict(exit_code=0, stderr='', stdout=test2.output + '2'),
+        dict(exit_code=0, stderr='', stdout=test1.output+ '\n'),
+        dict(exit_code=0, stderr='', stdout=test2.output + '2\n'),
     ]
 
     for response in mock_responses:

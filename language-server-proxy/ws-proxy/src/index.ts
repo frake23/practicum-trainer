@@ -1,51 +1,43 @@
-import { toSocket } from 'vscode-ws-jsonrpc';
-import * as rpcServer from 'vscode-ws-jsonrpc/server';
+import { toSocket, createWebSocketConnection } from 'vscode-ws-jsonrpc';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
-import 'dotenv/config';
+import { bindLanguageClient } from '@codingame/languageserver-mutualized';
+import { LanguageClientsPool } from './pool.js';
+import { Config } from './config.js';
 
-const forwardWsToProcess = (
-  ws: WebSocket,
-  createProcessArgs: Parameters<typeof rpcServer.createServerProcess>
-) => {
-  const socket = toSocket(ws);
-  const socketConnection = rpcServer.createWebSocketConnection(socket);
-  const serverConnection = rpcServer.createServerProcess(...createProcessArgs);
+console.log(Config);
 
-  if (serverConnection) {
-    rpcServer.forward(socketConnection, serverConnection, (message) => {
-      console.log(`Request with message `, message);
+const languageClientsPool = new LanguageClientsPool(
+    Config.LANGUAGE_CLIENTS_NUMBER,
+);
 
-      return message;
-    });
-  }
+const forwardWsToProcess = async (ws: WebSocket) => {
+    const socket = toSocket(ws);
+    const wsConnection = createWebSocketConnection(socket, null as any);
+    socket.onClose(() => wsConnection.dispose());
+
+    await bindLanguageClient(languageClientsPool.nextClient, wsConnection);
 };
 
 const main = () => {
-  const server = createServer();
+    const server = createServer();
 
-  const wss = new WebSocketServer({
-    noServer: true,
-  });
-
-  wss.on('connection', (ws: WebSocket) => {
-    forwardWsToProcess(ws, [
-      process.env.LANGUAGE as string,
-      process.env.PROC_COMMAND as string,
-    ]);
-  });
-
-  wss.on('close', () => console.log('CLOSED'));
-
-  server.on('upgrade', (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request);
+    server.listen(8080, () => {
+        console.log(`${Config.LANGUAGE} language server started`);
     });
-  });
 
-  server.listen(8080, () => {
-    console.log(`Server started on port ${8080}`);
-  });
+    const wss = new WebSocketServer({ noServer: true });
+    wss.on('connection', async (ws: WebSocket) => {
+        await forwardWsToProcess(ws);
+    });
+
+    wss.on('close', () => console.log('CLOSED'));
+
+    server.on('upgrade', (request, socket, head) => {
+        wss.handleUpgrade(request, socket, head, (ws) => {
+            wss.emit('connection', ws, request);
+        });
+    });
 };
 
 main();
